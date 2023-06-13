@@ -1,0 +1,54 @@
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+
+# Function to fetch all internal links from a web page
+def get_internal_links(url):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    internal_links = set()
+    
+    # Find all anchor tags with 'href' attribute
+    for link in soup.find_all('a', href=True):
+        href = link['href']
+        
+        # Append the base URL to relative URLs
+        internal_url = urljoin(url, href)
+        
+        # Add internal links to the set
+        if internal_url.startswith(url):
+            internal_links.add(internal_url)
+    
+    return internal_links
+
+# Function to check broken links on a web page
+def check_broken_links(url):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    broken_links = []
+    
+    # Find all anchor tags with 'href' attribute
+    for link in soup.find_all('a', href=True):
+        href = link['href']
+        
+        # Append the base URL to relative URLs
+        check_url = urljoin(url, href)
+        
+        # Send a request and check the response status code
+        link_response = requests.get(check_url)
+        if link_response.status_code != 200:
+            broken_links.append(check_url)
+    
+    return broken_links
+
+# Example usage
+base_url = 'https://www.example.com'
+internal_links = get_internal_links(base_url)
+print("Internal Links:")
+for link in internal_links:
+    print(link)
+
+broken_links = check_broken_links(base_url)
+print("Broken Links:")
+for link in broken_links:
+    print(link)
